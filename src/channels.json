@@ -1,0 +1,17 @@
+[
+  {
+    "name": "Lista 1",
+    "url": "https://actualsebastian.vercel.app/base.txt",
+    "isFirstSource": false
+  },
+  {
+    "name": "Lista 2",
+    "url": "https://raw.githubusercontent.com/yalerooo/listaparatv/refs/heads/main/lista2",
+    "isFirstSource": false
+  },
+  {
+    "name": "Lista 3",
+    "url": "https://raw.githubusercontent.com/yalerooo/listaparatv/refs/heads/main/tronoss.txt",
+    "isFirstSource": false
+  }
+]

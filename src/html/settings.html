@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings</title>
+     <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+    <div class="popup-container settings-popup">
+        <div class="popup-content settings-content">
+            <div>
+                <label for="vlcPathInput">VLC Path:</label>
+                <input type="text" id="vlcPathInput" readonly>
+                <button id="browseButton">Browse</button>
+            </div>
+            <div>
+                <label for="urlSelection">Select Channel List:</label>
+                <select id="urlSelection">
+                    <!-- Options will be populated dynamically -->
+                </select>
+            </div>
+            <div>
+                <button id="saveButton">Save</button>
+                <button id="cancelButton">Cancel</button>
+            </div>
+        </div>
+    </div>
+    <script src="../../src/renderer/settings.js"></script>
+</body>
+</html>

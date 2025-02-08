@@ -1,0 +1,284 @@
+/*  style.css  */
+/* Basic Styling */
+body {
+    font-family: sans-serif;
+    background-color: #000;
+    color: #fff;
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+     /* --- Custom Scrollbar --- */
+     --sb-track-color: #1a1a1b;
+     --sb-thumb-color: #ffffff;
+     --sb-size: 9px;
+}
+
+body::-webkit-scrollbar {
+    width: var(--sb-size);
+  }
+
+  body::-webkit-scrollbar-track {
+    background: var(--sb-track-color);
+    border-radius: 9px;
+  }
+
+  body::-webkit-scrollbar-thumb {
+    background: var(--sb-thumb-color);
+    border-radius: 9px;
+    border: 1px solid #232E33;
+  }
+
+  @supports not selector(::-webkit-scrollbar) {
+    body {
+        scrollbar-color: var(--sb-thumb-color)
+                         var(--sb-track-color);
+    }
+  }
+
+/* --- Sticky Header --- */
+.sticky-header {
+    position: sticky;
+    top: 0;
+    background-color: #111;
+    z-index: 10;
+    padding: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid #333;
+}
+
+/* --- Search Bar Styles --- */
+.search-bar-container {
+  flex-grow: 1;
+  display: flex;
+  justify-content: center;
+}
+
+.wrapper {
+  width: 100%;
+  max-width: 500px;
+}
+
+.searchBar {
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+#searchQueryInput {
+  width: 100%;
+  height: 2.8rem;
+  background: #222;
+  outline: none;
+  border: none;
+  border-radius: 1.625rem;
+  padding: 0 3.5rem 0 1.5rem;
+  font-size: 1rem;
+  color: #fff;
+}
+
+#searchQuerySubmit {
+  width: 3.5rem;
+  height: 2.8rem;
+  margin-left: -3.5rem;
+  background: none;
+  border: none;
+  outline: none;
+  cursor: pointer;
+}
+/* --- Content Area --- */
+.content-container {
+    padding: 20px;
+}
+
+#channelsPanel {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.channel-item {
+    width: 150px;
+    height: 150px;
+    margin: 10px;
+    text-align: center;
+    cursor: pointer;
+    background-color: #111;
+    border: 1px solid #333;
+    border-radius: 15px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+}
+
+.image-container {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    border-radius: 15px;
+}
+
+.channel-image {
+    max-width: 100%;
+    max-height: 100%;
+    width: auto;
+    height: auto;
+    object-fit: cover;
+    display: block;
+}
+
+.channel-name {
+    color: #fff;
+    font-size: 0.9em;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    width: 100%;
+    padding: 5px;
+    box-sizing: border-box;
+     position: relative; /* Make the container relative for absolute positioning */
+
+}
+.channel-name[title]:hover::after {
+    content: attr(title);
+    position: absolute;
+    background-color: #333;
+    color: white;
+    padding: 5px;
+    border-radius: 3px;
+    z-index: 20;
+    white-space: nowrap;
+     /* Position adjustments */
+    left: 50%;
+    transform: translateX(-50%);
+    bottom: calc(100% + 5px); /* Position it just below the channel name */
+
+}
+
+.error {
+    color: red;
+}
+
+.no-channels {
+    color: gray;
+}
+
+/* --- Popup Styles --- */
+.popup-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.75);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.popup-content {
+    background-color: #222;
+    width: 350px;
+    padding: 20px;
+    border-radius: 8px;
+    border: 1px solid #333;
+}
+
+/* Specific styles for settings popup */
+.settings-content {
+    background-color: #1a1a1a;
+    padding: 20px;
+    border-radius: 8px;
+}
+
+.popup-content h1 {
+    margin-top: 0;
+    margin-bottom: 20px;
+}
+
+/* Input and Button Styles */
+.popup-content div {
+    margin-bottom: 15px;
+}
+
+.popup-content div:last-child {
+    margin-bottom: 0;
+    display: flex;
+    gap: 10px;
+    justify-content: space-between;
+}
+
+.popup-content label {
+    display: block;
+    margin-bottom: 8px;
+}
+
+.popup-content input[type="text"],
+.popup-content select {
+    width: 100%;
+    padding: 8px;
+    background-color: #333;
+    border: 1px solid #444;
+    border-radius: 4px;
+    color: #fff;
+    font-size: 14px;
+    box-sizing: border-box;
+}
+
+.popup-content button {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    background-color: #444;
+    color: #fff;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.popup-content button:hover {
+    background-color: #555;
+}
+
+/* Specific styles for the browse button */
+#browseButton {
+    margin-top: 8px;
+    width: 100%;
+}
+
+/* Specific styles for the bottom buttons */
+#addSourceButton,
+#saveButton,
+#cancelButton {
+    flex: 1;
+    max-width: 110px;
+    text-align: center;
+}
+/*I put the style here*/
+#settingsButton, #infoButton {
+    padding: 8px 12px;
+    font-size: 14px;
+    background-color: #333;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+#infoButton {
+    margin-left: 10px; /*  Add some spacing between the buttons. */
+}
+
+#settingsButton:hover, #infoButton:hover {
+    background-color: #555;
+}
+
+#urlSelection {
+    width: 100%;
+}
