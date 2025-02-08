@@ -1,19 +1,54 @@
 {
-  "name": "autoacestreamv2",
+  "name": "autoacestream",
   "version": "1.0.0",
   "main": "src/main/main.js",
   "scripts": {
-    "start": "electron ."
+    "start": "electron .",
+    "build": "electron-builder"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "description": "",
   "devDependencies": {
-    "electron": "^34.1.1"
+    "electron": "^34.1.1",
+    "electron-builder": "^25.1.8" 
   },
   "dependencies": {
     "axios": "^1.7.9",
     "electron-store": "^10.0.1"
+  },
+  "build": {
+    "appId": "io.github.yalerooo.autoacestreamv2",
+    "productName": "AutoAcestream",
+    "copyright": "Copyright © 2025 Yalerooo", 
+    "directories": {
+      "output": "dist"  
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis", 
+          "arch": ["x64", "ia32"] 
+        },
+        "portable"  
+      ],
+      "icon": "src/assets/icon.ico",
+      "requestedExecutionLevel": "asInvoker" 
+    },
+    "nsis": {  
+        "oneClick": false, 
+        "allowToChangeInstallationDirectory": true,
+        "installerIcon": "src/assets/installerIcon.ico",
+        "uninstallerIcon": "src/assets/uninstallerIcon.ico",
+        "installerHeaderIcon": "src/assets/installerIcon.ico",
+        "createDesktopShortcut": true,
+        "createStartMenuShortcut": true
+    },
+	 "files": [
+      "src/**/*",
+      "package.json"
+    ],
+    "asar": true
   }
 }

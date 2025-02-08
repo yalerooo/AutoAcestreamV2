@@ -82,6 +82,8 @@ function createWindow() {
             nodeIntegration: false,
             contextIsolation: true,
         },
+        autoHideMenuBar: true,
+        icon: path.join(__dirname, '../assets/icon.ico'),
         show: false //  prevent flicker
     });
 
@@ -258,6 +260,28 @@ function registerIPCHandlers() {
             });
         });
     });
+    ipcMain.handle('delete-channel-source', async (event, urlToDelete) => {
+        try {
+            const sources = getDefaultChannelUrls();
+            const updatedSources = sources.filter(source => source.url !== urlToDelete);
+            writeChannelUrls(updatedSources);
+
+            // Update selectedListUrl if the deleted one was selected
+            const currentSettings = getSettings();
+            if (currentSettings.selectedListUrl === urlToDelete) {
+                const newSelectedUrl = updatedSources.length > 0 ? updatedSources[0].url : '';
+                store.set('selectedListUrl', newSelectedUrl);
+            }
+
+             // Reload channels in main window after source deletion.
+            mainWindow.webContents.send('update-channels', await loadChannels(getSettings().selectedListUrl));
+            return true; // Indicate success
+        } catch (error) {
+            console.error("Error deleting channel source:", error);
+            return false; // Indicate failure
+        }
+    });
+    
     // NEW: Handler for showing the info message
     ipcMain.handle('show-info-message', async () => {
         const result = await dialog.showMessageBox(mainWindow, {

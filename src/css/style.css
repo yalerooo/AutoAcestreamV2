@@ -282,3 +282,28 @@ body::-webkit-scrollbar {
 #urlSelection {
     width: 100%;
 }
+
+.option-container {
+    display: flex;
+    align-items: center; /* Vertical alignment */
+    width: 100%; /* Occupy the full width available */
+}
+
+.option-container option {
+    flex-grow: 1; /* Allow the option to grow and fill available space*/
+    margin-right: 5px;
+}
+.delete-button {
+    background-color: #ff4444; /*  red background */
+    color: #fff;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.8em;
+    margin-left: auto;
+}
+
+.delete-button:hover {
+    background-color: #cc0000; /*  darker red on hover */
+}
