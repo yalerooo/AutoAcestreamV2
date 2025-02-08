@@ -1,4 +1,3 @@
-// renderer.js (Modified to include info button functionality)
 document.addEventListener('DOMContentLoaded', async () => {
     const channelsPanel = document.getElementById('channelsPanel');
     const settingsButton = document.getElementById('settingsButton');
@@ -14,7 +13,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             return;
         }
         allChannels = channelData;
-        renderChannels(allChannels);
+		 // Check if allChannels is actually an array before rendering
+        if (Array.isArray(allChannels)) {
+            renderChannels(allChannels);
+        } else {
+            console.error("Loaded channels data is not an array:", allChannels);
+            channelsPanel.innerHTML = `<div class="error">Error: Invalid channel data.</div>`;
+        }
+
     }
 
    function renderChannels(channels) {
@@ -42,7 +48,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const name = document.createElement('div');
             name.textContent = channel.name;
             name.classList.add('channel-name');
-            name.setAttribute('title', channel.name); //  Add the full name as the title attribute
+            name.setAttribute('title', channel.name);
 
             channelItem.appendChild(imageContainer);
             channelItem.appendChild(name);
@@ -64,12 +70,22 @@ document.addEventListener('DOMContentLoaded', async () => {
         renderChannels(filteredChannels);
     });
 
-    // NEW: Info button event listener
     infoButton.addEventListener('click', () => {
         window.electronAPI.showInfoMessage();
     });
 
-
+    // Call loadAndDisplayChannels on startup
     loadAndDisplayChannels();
-    window.electronAPI.onUpdateChannels(renderChannels);
+
+    // Listen for updates and re-render
+    window.electronAPI.onUpdateChannels(async (updatedChannels) => {
+		if (Array.isArray(updatedChannels)) { //Check if are an array.
+			allChannels = updatedChannels; // Update allChannels
+			renderChannels(allChannels);
+		} else {
+			console.error("Updated channels data is not an array:", updatedChannels);
+            channelsPanel.innerHTML = `<div class="error">Error: Invalid channel data.</div>`; // Show error in UI.
+		}
+
+    });
 });

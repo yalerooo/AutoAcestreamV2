@@ -75,7 +75,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         };
         await window.electronAPI.saveSettings(settings);
         window.electronAPI.closeSettingsDialog();
-        await window.electronAPI.loadChannels();
     });
 
     cancelButton.addEventListener('click', () => window.electronAPI.closeSettingsDialog());
@@ -91,8 +90,7 @@ document.addEventListener('DOMContentLoaded', async () => {
            vlcPath: vlcPathInput.value,
            selectedListUrl: urlSelectionContainer.value
        };
-       await window.electronAPI.saveSettings(settings);
-       await window.electronAPI.loadChannels();
+       await window.electronAPI.saveSettings(settings); //Use the saveSettings.
     });
 
     addSourceButton.textContent = 'Add Source';

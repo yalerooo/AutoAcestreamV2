@@ -12,7 +12,7 @@
   "description": "",
   "devDependencies": {
     "electron": "^34.1.1",
-    "electron-builder": "^25.1.8" 
+    "electron-builder": "^25.1.8"
   },
   "dependencies": {
     "axios": "^1.7.9",
@@ -21,34 +21,50 @@
   "build": {
     "appId": "io.github.yalerooo.autoacestreamv2",
     "productName": "AutoAcestream",
-    "copyright": "Copyright © 2025 Yalerooo", 
+    "copyright": "Copyright © 2025 Yalerooo",
     "directories": {
-      "output": "dist"  
+      "output": "dist"
     },
+	"extraResources": [ 
+      {
+        "from": "src/channels.json",
+        "to": "channels.json"
+      },
+      {
+        "from": "src/image_mappings.json",
+        "to": "image_mappings.json"
+      }
+    ],
     "win": {
       "target": [
         {
-          "target": "nsis", 
-          "arch": ["x64", "ia32"] 
+          "target": "nsis",
+          "arch": [
+            "x64",
+            "ia32"
+          ]
         },
-        "portable"  
+        "portable"
       ],
       "icon": "src/assets/icon.ico",
-      "requestedExecutionLevel": "asInvoker" 
+      "requestedExecutionLevel": "asInvoker"
     },
-    "nsis": {  
-        "oneClick": false, 
-        "allowToChangeInstallationDirectory": true,
-        "installerIcon": "src/assets/installerIcon.ico",
-        "uninstallerIcon": "src/assets/uninstallerIcon.ico",
-        "installerHeaderIcon": "src/assets/installerIcon.ico",
-        "createDesktopShortcut": true,
-        "createStartMenuShortcut": true
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "installerIcon": "src/assets/installerIcon.ico",
+      "uninstallerIcon": "src/assets/uninstallerIcon.ico",
+      "installerHeaderIcon": "src/assets/installerIcon.ico",
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
     },
-	 "files": [
+    "files": [
       "src/**/*",
       "package.json"
     ],
-    "asar": true
+    "asar": true,
+	"asarUnpack": [
+      "src/channels.json", "src/image_mappings.json"
+    ]
   }
 }

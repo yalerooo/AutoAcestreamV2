@@ -1,4 +1,3 @@
-// preload.js (Modified to expose showInfoMessage)
 const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('electronAPI', {
@@ -14,6 +13,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
     showAddSourceDialog: () => ipcRenderer.invoke('show-add-source-dialog'),
     addSourceData: (data) => ipcRenderer.send('add-source-data', data),
     cancelAddSource: () => ipcRenderer.send('cancel-add-source'),
+    showInfoMessage: () => ipcRenderer.invoke('show-info-message'),
     deleteChannelSource: (url) => ipcRenderer.invoke('delete-channel-source', url),
-    showInfoMessage: () => ipcRenderer.invoke('show-info-message')
 });
