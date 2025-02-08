@@ -9,6 +9,8 @@ The project uses Node.js and npm (or yarn) to manage dependencies. The `node_mod
 ```
 SimpleAcePlayer/
 ├── src/
+│   ├── assets/
+│   │   └── icon.ico
 │   ├── css/
 │   │   └── style.css
 │   ├── html/
