@@ -21,7 +21,7 @@ Antes de comenzar, asegúrate de tener instalado lo siguiente en tu sistema:
 Clona este repositorio en tu máquina local utilizando el siguiente comando:
 
 ```bash
-git clone [https://github.com/tu-usuario/tu-repositorio.git](https://github.com/yalerooo/AutoAcestreamV2.git)
+git clone https://github.com/yalerooo/AutoAcestreamV2.git
 cd AutoAcestreamV2
 ```
 
