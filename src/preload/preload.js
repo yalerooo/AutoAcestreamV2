@@ -15,4 +15,5 @@ contextBridge.exposeInMainWorld('electronAPI', {
     cancelAddSource: () => ipcRenderer.send('cancel-add-source'),
     showInfoMessage: () => ipcRenderer.invoke('show-info-message'),
     deleteChannelSource: (url) => ipcRenderer.invoke('delete-channel-source', url),
+    showFileDialog: () => ipcRenderer.invoke('show-file-dialog'), // For file browsing
 });

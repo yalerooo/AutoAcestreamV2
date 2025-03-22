@@ -1,7 +1,8 @@
 const { app, BrowserWindow, ipcMain, dialog, shell, screen } = require('electron');
 const path = require('path');
-const fs = require('fs').promises; // Use promises version for async/await
+const fs = require('fs').promises;
 const axios = require('axios');
+const { protocol } = require('electron');
 
 const ACE_BASE_URL = "http://127.0.0.1:6878/ace/getstream?id=";
 
@@ -18,26 +19,22 @@ async function initializeStore() {
     store = new Store();
 }
 
-// Use app.getPath('userData') for persistent data
 async function initializeDataPaths() {
     const userDataPath = app.getPath('userData');
     channelsFilePath = path.join(userDataPath, 'channels.json');
     imageMappingsPath = path.join(userDataPath, 'image_mappings.json');
-    await copyFilesToUserData(); // Copy files on first run
+    await copyFilesToUserData();
 }
 
-// Copy files to userData if they don't exist
 async function copyFilesToUserData() {
     const resourcesPath = app.isPackaged
-        ? path.join(process.resourcesPath, 'app.asar.unpacked', 'src') // Packaged
-        : path.join(__dirname, '..'); // Development
+        ? path.join(process.resourcesPath, 'app.asar.unpacked', 'src')
+        : path.join(__dirname, '..');
 
-    //Copy channels.json.
     if (!await fileExists(channelsFilePath)) {
         await fs.copyFile(path.join(resourcesPath, 'channels.json'), channelsFilePath);
     }
 
-    //Copy image_mappings.json.
     if (!await fileExists(imageMappingsPath)) {
         await fs.copyFile(path.join(resourcesPath, 'image_mappings.json'), imageMappingsPath);
     }
@@ -65,11 +62,10 @@ async function loadImageMappings() {
 async function getDefaultChannelUrls() {
     try {
         if (!await fileExists(channelsFilePath)) {
-             return []; // Return empty if the files does not exists.
+            return [];
         }
         const data = await fs.readFile(channelsFilePath, 'utf8');
         const sources = JSON.parse(data);
-		 // Check if sources is actually an array
         return Array.isArray(sources) ? sources : [];
     } catch (error) {
         console.error("Error reading channels.json:", error);
@@ -77,24 +73,29 @@ async function getDefaultChannelUrls() {
     }
 }
 
-
 async function writeChannelUrls(sources) {
     try {
         await fs.writeFile(channelsFilePath, JSON.stringify(sources, null, 2), 'utf8');
-        console.log("Successfully wrote to channels.json");
     } catch (error) {
         console.error("Error writing to channels.json:", error);
     }
 }
 
-// *** IMPORTANT: Get settings with a default URL ***
 async function getSettings() {
-    const sources = await getDefaultChannelUrls(); // Await this!
+  const sources = await getDefaultChannelUrls();
     const defaultUrl = sources.length > 0 ? sources[0].url : '';
     return {
         vlcPath: store.get('vlcPath', ''),
-        selectedListUrl: store.get('selectedListUrl', defaultUrl) // Use defaultUrl
+        selectedListUrl: store.get('selectedListUrl', defaultUrl)
     };
+}
+// Helper to safely close and nullify windows.
+function safeClose(window) {
+    if (window) {
+        window.close();
+        window = null;
+    }
+    return window;
 }
 
 function createWindow() {
@@ -124,15 +125,21 @@ function createWindow() {
         if (!mainWindow.isMaximized()) {
             store.set('windowBounds', mainWindow.getBounds());
         }
+        // CRITICAL: Close child windows when the main window closes
+        settingsWindow = safeClose(settingsWindow);
+        addSourceWindow = safeClose(addSourceWindow);
     });
 
-    mainWindow.on('maximize', () => {
-        store.set('isMaximized', true);
+    // --- MODIFIED: will-move AND focus management ---
+    mainWindow.on('will-move', () => {
+        if (addSourceWindow) {
+            addSourceWindow.moveTop();
+        }
+        if (settingsWindow) {
+            settingsWindow.moveTop();
+        }
     });
-
-    mainWindow.on('unmaximize', () => {
-        store.set('isMaximized', false);
-    });
+    // --- END MODIFIED SECTION ---
 
     if (store.get('isMaximized')) {
         mainWindow.maximize();
@@ -140,12 +147,18 @@ function createWindow() {
     mainWindow.show();
 }
 
-
-async function loadChannels(url) {
-    if (!url) { return { error: "No URL provided." }; }
+async function loadChannels(source) {
+    if (!source) { return { error: "No source provided." }; }
     try {
-        const response = await axios.get(url);
-        return parseChannels(response.data);
+        let m3uContent;
+        if (source.startsWith("file://")) {
+            const filePath = source.slice(7);
+            m3uContent = await fs.readFile(filePath, 'utf8');
+        } else {
+            const response = await axios.get(source);
+            m3uContent = response.data;
+        }
+        return parseChannels(m3uContent);
     } catch (error) {
         console.error("Error loading channels:", error);
         return { error: error.message };
@@ -168,7 +181,6 @@ function parseChannels(m3uContent) {
                 aceId = match[1];
             }
         }
-          // Added checks for defined values before pushing
         if (name && aceId) {
             const imageUrl = getImageUrl(name);
             channels.push({ name, aceId, imageUrl });
@@ -185,21 +197,18 @@ function getImageUrl(channelName) {
 
     for (const mapping of imageMappings) {
         for (const keyword of mapping.keywords) {
-             if (keyword === 'default') {
-                continue;
-            }
+            if (keyword === 'default') continue;
             if (channelName.toLowerCase().includes(keyword.toLowerCase())) {
                 return mapping.imageUrl;
             }
         }
     }
-
     const defaultMapping = imageMappings.find(mapping => mapping.keywords.includes('default'));
-    return defaultMapping ? defaultMapping.imageUrl :  '../../default_channel_image.png';
+    return defaultMapping ? defaultMapping.imageUrl : '../../default_channel_image.png';
 }
 
 function playInVLC(vlcPath, aceId) {
-    if (!vlcPath) { return { error: "VLC path is not configured." }; }
+    if (!vlcPath) return { error: "VLC path not configured." };
     const streamUrl = `${ACE_BASE_URL}${aceId}`;
     try {
         require('child_process').spawn(vlcPath, [streamUrl]);
@@ -211,38 +220,59 @@ function playInVLC(vlcPath, aceId) {
 }
 
 function registerIPCHandlers() {
-	ipcMain.handle('get-settings', async () => await getSettings()); // Await getSettings
+    ipcMain.handle('get-settings', async () => await getSettings());
 
-	ipcMain.handle('save-settings', async (event, settings) => {
-		store.set('vlcPath', settings.vlcPath);
-		store.set('selectedListUrl', settings.selectedListUrl);
-        // After saving, update channels in the main window.
+    ipcMain.handle('save-settings', async (event, settings) => {
+        store.set('vlcPath', settings.vlcPath);
+        store.set('selectedListUrl', settings.selectedListUrl);
         mainWindow.webContents.send('update-channels', await loadChannels(settings.selectedListUrl));
-		return { success: true };
-	});
+        return { success: true };
+    });
 
-	ipcMain.handle('load-channels', async () => {
-		const settings = await getSettings(); // Await getSettings
-		const channels = await loadChannels(settings.selectedListUrl);
-		return channels; // Return the channels
-	});
+   ipcMain.handle('load-channels', async () => {
+        const settings = await getSettings();
+        const sources = await getDefaultChannelUrls();
+        let selectedListUrl = settings.selectedListUrl;
+        if (!selectedListUrl && sources.length > 0) {
+            selectedListUrl = sources[0].url;
+        }
+        if (!selectedListUrl) {
+            return [];
+        }
+        return await loadChannels(selectedListUrl);
+    });
 
-	ipcMain.handle('get-channel-sources', getDefaultChannelUrls);
-	ipcMain.handle('show-open-dialog', () => dialog.showOpenDialog(mainWindow, {
-		title: 'Select VLC executable', filters: [{ name: 'Executables', extensions: ['exe'] }], properties: ['openFile']
-	}));
-	ipcMain.handle('play-in-vlc', async (event, aceId) => {
-		const settings = await getSettings(); // Await getSettings
-		return playInVLC(settings.vlcPath, aceId);
-	});
-	ipcMain.on('close-settings-dialog', () => { settingsWindow?.close(); settingsWindow = null; });
+    ipcMain.handle('get-channel-sources', async () => await getDefaultChannelUrls());
+
+    ipcMain.handle('show-open-dialog', () => dialog.showOpenDialog(mainWindow, {
+        title: 'Select VLC executable', filters: [{ name: 'Executables', extensions: ['exe'] }], properties: ['openFile']
+    }));
+    ipcMain.handle('play-in-vlc', async (event, aceId) => {
+        const settings = await getSettings();
+        return playInVLC(settings.vlcPath, aceId);
+    });
+    ipcMain.on('close-settings-dialog', () => { settingsWindow = safeClose(settingsWindow); });
+
 	ipcMain.handle('show-settings-dialog', () => {
 		settingsWindow = new BrowserWindow({
 			parent: mainWindow, modal: true, show: false, width: 600, height: 500, frame: false, resizable: false,
 			webPreferences: { preload: path.join(__dirname, '../preload/preload.js'), nodeIntegration: false, contextIsolation: true, }
 		});
 		settingsWindow.loadFile(path.join(__dirname, '../html/settings.html'));
+        // --- MODIFIED: show event and focus ---
+        settingsWindow.on('show', () => {
+            if (addSourceWindow) {  // Ensure addSource is behind settings
+                addSourceWindow.moveTop();
+            }
+             settingsWindow.moveTop(); // Bring settingsWindow to the VERY top
+            settingsWindow.focus(); // Explicitly give it focus
+        });
+        // --- END MODIFIED SECTION ---
+
 		settingsWindow.once('ready-to-show', () => settingsWindow.show());
+        settingsWindow.on('closed', () => {
+            settingsWindow = null;
+        });
 	});
 
 	 ipcMain.handle('show-add-source-dialog', async () => {
@@ -262,36 +292,41 @@ function registerIPCHandlers() {
             });
             addSourceWindow.loadFile(path.join(__dirname, '../html/addSourceDialog.html'));
 
-            ipcMain.once('add-source-data', (event, data) => {
-                if (addSourceWindow) {
-                    addSourceWindow.close();
-                    addSourceWindow = null;
+            ipcMain.once('add-source-data', async (event, data) => {
+                addSourceWindow = safeClose(addSourceWindow);
+                try {
+                    const sources = await getDefaultChannelUrls();
+                    sources.push({ name: data.name, url: data.url, isFile: data.isFile || false });
+                    await writeChannelUrls(sources);
+                    resolve(true);
+                } catch (error) {
+                    console.error("Error adding source:", error);
+                    resolve(false);
                 }
-                getDefaultChannelUrls().then(sources => { // Use async/await here
-					sources.push({ name: data.name, url: data.url }); // No need for isFirstSource
-					writeChannelUrls(sources).then(() => { // Use async/await
-						resolve(true);
-					}).catch(err => {
-						console.error("Error adding source (writing):", err);
-						resolve(false); // Resolve false on write error
-					});
-				}).catch(err => {
-					console.error("Error adding source (reading):", err);
-					resolve(false); // Resolve false on read error
-				});
             });
 
             ipcMain.once('cancel-add-source', () => {
-                if (addSourceWindow) {
-                    addSourceWindow.close();
-                    addSourceWindow = null;
-                }
+                addSourceWindow = safeClose(addSourceWindow);
                 resolve(false);
             });
 
-            addSourceWindow.once('ready-to-show', () => {
-                addSourceWindow.show();
+            ipcMain.handle('show-file-dialog', async () => {
+                return await dialog.showOpenDialog(addSourceWindow, {
+                    properties: ['openFile'],
+                    filters: [{ name: 'Playlist Files', extensions: ['m3u', 'txt'] }]
+                });
             });
+
+            // --- MODIFIED: show event and focus ---
+            addSourceWindow.on('show', () => {
+                addSourceWindow.moveTop(); // Bring to top
+                addSourceWindow.focus();     // Give it focus
+            });
+            // --- END MODIFIED SECTION ---
+            addSourceWindow.on('closed', () => {
+                 addSourceWindow = null;
+            });
+            addSourceWindow.once('ready-to-show', () => addSourceWindow.show());
         });
     });
     ipcMain.handle('show-info-message', async () => {
@@ -299,8 +334,8 @@ function registerIPCHandlers() {
             type: 'info',
             title: 'Information',
             message: 'This application requires VLC Media Player and Ace Stream Media to be installed.\n\n' +
-                     'Click "VLC" to download VLC.\n' +
-                     'Click "Ace Stream" to download Ace Stream.',
+                'Click "VLC" to download VLC.\n' +
+                'Click "Ace Stream" to download Ace Stream.',
             buttons: ['VLC', 'Ace Stream', 'OK'],
             defaultId: 2,
             cancelId: 2
@@ -312,34 +347,40 @@ function registerIPCHandlers() {
         }
     });
 
-	ipcMain.handle('delete-channel-source', async (event, urlToDelete) => {
+    ipcMain.handle('delete-channel-source', async (event, urlToDelete) => {
         try {
-            const sources = await getDefaultChannelUrls(); // Await the promise
+            const sources = await getDefaultChannelUrls();
             const updatedSources = sources.filter(source => source.url !== urlToDelete);
-            await writeChannelUrls(updatedSources); // Await the write
+            await writeChannelUrls(updatedSources);
 
-            // Update selectedListUrl if the deleted one was selected
-            const currentSettings = await getSettings(); // Now await get settings
+            let currentSettings = await getSettings();
             if (currentSettings.selectedListUrl === urlToDelete) {
                 const newSelectedUrl = updatedSources.length > 0 ? updatedSources[0].url : '';
                 store.set('selectedListUrl', newSelectedUrl);
+                mainWindow.webContents.send('update-channels', await loadChannels(newSelectedUrl));
+            } else {
+                mainWindow.webContents.send('update-channels', await loadChannels(currentSettings.selectedListUrl));
             }
-             // Reload channels after deleting
-            mainWindow.webContents.send('update-channels', await loadChannels(getSettings().selectedListUrl));
-            return true; // Indicate success
+            return true;
         } catch (error) {
-            console.error("Error deleting channel source:", error);
-            return false; // Indicate failure
+            console.error("Error deleting source:", error);
+            return false;
         }
     });
 }
 
 app.whenReady().then(async () => {
     await initializeStore();
-	await initializeDataPaths(); // Initialize data paths (and copy files)
+    await initializeDataPaths();
     await loadImageMappings();
     registerIPCHandlers();
     createWindow();
+
+    protocol.registerFileProtocol('file', (request, callback) => {
+        const pathname = decodeURIComponent(request.url.replace('file:///', ''));
+        callback(pathname);
+    });
+
     app.on('activate', () => { if (BrowserWindow.getAllWindows().length === 0) createWindow(); });
 });
 

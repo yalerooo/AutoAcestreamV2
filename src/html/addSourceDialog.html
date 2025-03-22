@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Add Source</title>
-    <link rel="stylesheet" href="../../src/css/style.css"> <!--  Correct path -->
+    <link rel="stylesheet" href="../../src/css/style.css">
 </head>
 <body>
     <div class="popup-container add-source-popup">
@@ -15,15 +15,30 @@
                 <input type="text" id="sourceName" placeholder="Enter source name">
             </div>
             <div>
+                <label>Source Type:</label>
+                <input type="radio" id="sourceTypeUrl" name="sourceType" value="url" checked>
+                <label for="sourceTypeUrl">URL</label>
+                <input type="radio" id="sourceTypeFile" name="sourceType" value="file">
+                <label for="sourceTypeFile">File</label>
+            </div>
+
+            <div id="urlInputContainer">
                 <label for="sourceUrl">Source URL:</label>
                 <input type="text" id="sourceUrl" placeholder="Enter source URL">
             </div>
+
+            <div id="fileInputContainer" style="display: none;">
+                <label for="sourceFile">Source File:</label>
+                <input type="text" id="sourceFile" readonly>
+                <button id="browseFile">Browse</button>
+            </div>
+
             <div>
                 <button id="addSourceConfirm">Add</button>
                 <button id="addSourceCancel">Cancel</button>
             </div>
         </div>
     </div>
-    <script src="../../src/renderer/addSourceDialog.js"></script> <!-- Correct path -->
+    <script src="../../src/renderer/addSourceDialog.js"></script>
 </body>
 </html>
